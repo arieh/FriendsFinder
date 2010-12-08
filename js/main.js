@@ -6,25 +6,33 @@ $(document).ready(function(){
       , xfbml: true
     });
     
+    var msg = $('.msg'), box;
+    
     function initSearcher(){
-       var msg = $('.msg');
        msg.empty();
        msg.append(
             $("<span>App is loading</span>")
             , $("<img src='preloader.gif' alt='' />")
        );
        
-       var list = new FriendsList, search = new SearchBox(list,{target:$('#search-box')});
+       box = $.fn.friendsFinder($('#search-box'));
        
-       search.addEvent('ready',function(){
+       box.addEvent('ready',function(){
             msg.empty();            
             msg.append($('<span>You can now start searching your friends using the text-box bellow</span>'));
        });
     }
     
     if (FB._userStatus !== 'connected'){
-        $('.msg').append('You must be logged in for this app to work properly.');
+        msg.append('You must be logged in for this app to work properly.');
         FB.Event.subscribe('auth.login',initSearcher);
-    
     }else initSearcher();
+    
+    FB.Event.subscribe('auth.sessionChange',function(ses){
+        if ('connected' != ses.status){
+            box.close();
+            msg.empty();
+            msg.append('You must be logged in for this app to work properly.');
+        }
+    });
 });

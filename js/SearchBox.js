@@ -31,9 +31,24 @@ var Events = this.Events = {
      * @return this
      */
     , addEvent : function(name,cb){
+        
         if (!this.events[name]) this.events[name] = [cb];
         else this.events[name].push(cb);
         
+        return this;
+    }
+    
+    /**
+     * removes a function from the event stack
+     * 
+     * @param {String}     name event name
+     * @param {Function} func   a function to remove from the stack
+     *
+     * @return this
+     */
+    , removeEvent :function(name,func){
+        var index = $.inArray(func,this.events[name]);
+        if (index>-1) this.events[name].splice(index,1);
         return this;
     }
 }
@@ -50,6 +65,9 @@ RegExp.escape = function(str) {
  */
 var FriendsList = this.FriendsList = function FriendsList(){
     var $this = this;
+    FB.Event.subscribe('auth.logout',function(){
+        this.fetched = false;
+    });
     this.getFriends();
 }
 
@@ -61,7 +79,11 @@ FriendsList.prototype = {
      * fetches the friends list using the facebook SDK
      */
     , getFriends : function(){
-         if (FB._userStatus != 'connected') throw "User must be connected to facebook for this class to work properly!";
+         if (FB._userStatus != 'connected'){
+            this.fireEvent('error',[0,"User must be connected to facebook for this class to work properly!"]);
+            this.fetched = false;
+            return false;
+        }
          
          var $this = this;
          
@@ -80,6 +102,8 @@ FriendsList.prototype = {
      * @return {Array} a list of friends matching the search phrase
      */
     , search : function(phrase){
+        if (!this.fetched) this.fireEvent('error',[1,"cannot search while user in logged out!"]);
+        
         var search = new RegExp(RegExp.escape(phrase),'i')
             , match = [];
         $.each(this.friends,function(){
@@ -101,24 +125,24 @@ $.extend(FriendsList.prototype,Events);
 var SearchBox = this.SearchBox = function SearchBox(list,options){
     var $this = this;
     
+    function addOnce(){
+        $this.init();
+        list.removeEvent('fetched',addOnce);
+    }
+    
     $.extend(this.options,options || {});
     
     this.list = list;
     if (!list.fetched){
-        list.addEvent('fetched',function(){
-            $this.init();
-        });
+         list.addEvent('fetched',addOnce);
     } else this.init();
 };
 
 SearchBox.prototype = {
-    box : null
-    , resutls : []
-    , current : -1
     /*
-        a list of optional parameters for the class:
+     *  a list of optional parameters for the class:
      */
-    , options : {
+    options : {
         // what element do we want to inject the widget into?
         target :null
         
@@ -126,7 +150,12 @@ SearchBox.prototype = {
         , minLength : 2
     }
     
+    /**
+     * Class initializer
+     */
     , init : function(){
+        this.results = [];
+        this.current = -1;
         this.generateBox();
         this.attachEvents();
         if (this.options.target) $(this.options.target).append(this.box);
@@ -141,6 +170,7 @@ SearchBox.prototype = {
      * @return this
      */
     , search : function(phrase){
+        if (!this.list.fetched) return;
         var results = this.list.search(phrase);
         
         this.fireEvent('complete',[results]);
@@ -149,6 +179,7 @@ SearchBox.prototype = {
         return this;
     }
     
+    /* creates the elements used by the class and also in charge of caching main interface elements */
     , generateBox : function(){
         this.box = $(
             "<div class='box'>"
@@ -164,12 +195,9 @@ SearchBox.prototype = {
        this.resultsBox = $(this.box.find('.results')[0]);
     }
     
+    /* attaches the various events in charge of the widget's functionality */
     , attachEvents : function(){
         var $this = this;
-        
-        function navigate(){
-            if ($this.input == this) console.log('aaa');
-        }
         
         this.input.bind('keyup',function(e){
            var ch = String.fromCharCode(e.which);
@@ -178,10 +206,65 @@ SearchBox.prototype = {
            if (this.value.length>=$this.options.minLength) $this.search(this.value);
         });
         
-        this.box.delegate('input','keydown',navigate);
-        this.box.delegate('a','keydown',navigate);
+        /* Keyboard navigation */
+        this.box.delegate('input','keydown',function(e){
+            $this.navigate(e);
+        });
+        
+        this.box.delegate('a','keydown',function(e){
+            $this.navigate(e);
+        });
+        
+        this.input.bind('focus',function(){
+            $this.current = -1;
+        });
+        
+        //in case an anchor wa focused using tab navigation
+        this.box.delegate('a','focus',function(e){
+              var index = $.inArray(this,$this.results);
+              $this.current = index;
+        });
     }
     
+    /* keyboard navigation event handler */
+     , navigate : function(e){
+        switch (e.which){
+            case 40: //down
+                if (this.current < this.results.length - 1){
+                    if (this.current <-1) this.current = -1;
+                    
+                    this.results[++this.current].focus();
+                    return false;;
+                }
+            break;
+            case 38: //up
+                if (this.current <0) return false;
+                
+                if (this.current == 0){
+                    this.input.focus();
+                    this.current--;
+                    return false;;
+                }
+                
+                this.results[--this.current].focus();
+            break;
+            case 9: return; break; //ingnore tabs
+            default: 
+                this.input.focus();
+                this.current = -1;
+                this.search(this.input[0].value);
+            break;
+        }
+     }
+    
+    /**
+     * creats a friends list in the widget
+     *
+     * @param {Array} friends   an array of literal objects containing friend's name and id (should conform with the FB data structure)
+     * @param {String} phrase  the search phrase that was used to create the list
+     *
+     * @return this
+     */
     , createList : function(friends,phrase){
         var $this = this, search = new RegExp('('+RegExp.escape(phrase)+')','ig');
         
@@ -199,9 +282,37 @@ SearchBox.prototype = {
            $this.results.push(li.find('a')[0]);
            $this.resultsBox.append(li);
         });
+        
+        return this;
     }
+    
+    , close : function(){
+        this.box.remove();        
+    }
+    
 };
 
 $.extend(SearchBox.prototype,Events);
+
+
+jQuery.fn.friendsFinder = function(el,min){
+     var params = {target:el}
+     if (min) params['minLength'] = min;
+     
+     var list = new FriendsList;
+     var box = new SearchBox(list,params);
+     jQuery.fn.friendsFinder.box = box;
+     jQuery.fn.friendsFinder.list = list;
+     
+     box.addEvent('ready',function(){
+        $.event.trigger('friendsFinder.ready');
+     });
+     
+     box.addEvent('complete',function(res){
+        $.event.trigger('friendsFinder.complete',[res]);
+     });
+     
+     return box;
+};
 
 }).apply(this,[jQuery]);
