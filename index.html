@@ -1,0 +1,31 @@
+<!DOCTYPE HTML>
+<html lang="en-US" xmlns:fb="http://www.facebook.com/2008/fbml">
+<head>
+	<meta charset="UTF-8">
+	<title>FriendsFinder</title>
+    <link rel="stylesheet" type="text/css" href="css/reset.css" media="all" />
+    <link rel="stylesheet" type="text/css" href="css/main.css" media="all" />
+    
+    <!--[if IE]>
+    	<style type="text/css">
+            #search-box, .box .search{
+                behavior: url(css/PIE.htc);
+            }
+        </style>
+    <![endif]-->
+</head>
+<body>
+    <div id='search-box'>
+        <h1>FriendsFinder <p id='fb-login'><fb:login-button autologoutlink="true"></fb:login-button></p></h1>
+        <p class="msg"></p>        
+    </div>
+    
+    <div id="fb-root"></div>
+    
+	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
+    <!--<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.2/jquery-ui.min.js"></script>-->
+    <script src="http://connect.facebook.net/en_US/all.js"></script>
+    <script type="text/javascript" src="js/SearchBox.js"></script>
+    <script type="text/javascript" src="js/main.js"></script>
+</body>
+</html>
