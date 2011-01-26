@@ -1,9 +1,9 @@
 //method for escaping regular expressions
 //taken from http://stackoverflow.com/questions/280793/case-insensitive-string-replacement-in-javascript
-RegExp.escape = function(str) {
+RegExp.escape = function escape(str) {
   var specials = new RegExp("[.*+?|()\\[\\]{}\\\\]", "g"); // .*+?|()[]{}\
   return str.replace(specials, "\\$&");
-}
+};
 
 (function($){
 /**
