@@ -66,7 +66,7 @@ RegExp.escape = function(str) {
 var FriendsList = this.FriendsList = function FriendsList(){
     var $this = this;
     FB.Event.subscribe('auth.logout',function(){
-        this.fetched = false;
+        $this.fetched = false;
     });
     this.getFriends();
 }
