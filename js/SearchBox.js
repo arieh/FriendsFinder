@@ -1,58 +1,3 @@
-(function($){
-/**
- * Mixin object to supply costum events functionality to classes
- */ 
-var Events = this.Events = {
-    events : {}
-    /**
-     * fires an event, calling all callback functions listening to is
-     *
-     * @param {String} name event name
-     * @param {Array}  args   a list of paramaters to pass to the callback
-     * @param {mixed} bing   an object to bing the callback
-     *
-     * @return this
-     */
-    , fireEvent : function(name,args,bind){
-        if (!this.events[name]) return;
-        $.each(this.events[name],function(){
-            this.apply(bind,args || []);
-        });
-        
-        return this;
-    }
-    
-    /**
-     * adds a callback function to listen for an event
-     *
-     * @param {String}     name event name
-     * @param {Function} cb      a callback function for the event 
-     * 
-     * @return this
-     */
-    , addEvent : function(name,cb){
-        
-        if (!this.events[name]) this.events[name] = [cb];
-        else this.events[name].push(cb);
-        
-        return this;
-    }
-    
-    /**
-     * removes a function from the event stack
-     * 
-     * @param {String}     name event name
-     * @param {Function} func   a function to remove from the stack
-     *
-     * @return this
-     */
-    , removeEvent :function(name,func){
-        var index = $.inArray(func,this.events[name]);
-        if (index>-1) this.events[name].splice(index,1);
-        return this;
-    }
-}
-
 //method for escaping regular expressions
 //taken from http://stackoverflow.com/questions/280793/case-insensitive-string-replacement-in-javascript
 RegExp.escape = function(str) {
@@ -60,62 +5,7 @@ RegExp.escape = function(str) {
   return str.replace(specials, "\\$&");
 }
 
-/**
- * This Class provides the friends searching functionality. It assumes the user is connected to the facebook system.
- */
-var FriendsList = this.FriendsList = function FriendsList(){
-    var $this = this;
-    FB.Event.subscribe('auth.logout',function(){
-        $this.fetched = false;
-    });
-    this.getFriends();
-}
-
-FriendsList.prototype = {
-    friends : {}
-    , fetched : false
-    
-    /**
-     * fetches the friends list using the facebook SDK
-     */
-    , getFriends : function(){
-         if (FB._userStatus != 'connected'){
-            this.fireEvent('error',[0,"User must be connected to facebook for this class to work properly!"]);
-            this.fetched = false;
-            return false;
-        }
-         
-         var $this = this;
-         
-         FB.api('/me/friends' , function(res){
-            $this.friends = res.data;
-            $this.fetched = true;
-            $this.fireEvent('fetched');
-         });
-    }
-    
-    /**
-     * searchs the friends list for any user that contains a certain string
-     *
-     * @param {String} phrase a string to match
-     *
-     * @return {Array} a list of friends matching the search phrase
-     */
-    , search : function(phrase){
-        if (!this.fetched) this.fireEvent('error',[1,"cannot search while user in logged out!"]);
-        
-        var search = new RegExp(RegExp.escape(phrase),'i')
-            , match = [];
-        $.each(this.friends,function(){
-            if (search.test(this.name)) match.push(this);
-        });
-        
-        return match;
-    }
-}
-
-$.extend(FriendsList.prototype,Events);
-
+(function($){
 /**
  * Creates a search box for searching facebook friends
  *
@@ -125,16 +15,15 @@ $.extend(FriendsList.prototype,Events);
 var SearchBox = this.SearchBox = function SearchBox(list,options){
     var $this = this;
     
-    function addOnce(){
-        $this.init();
-        list.removeEvent('fetched',addOnce);
-    }
-    
     $.extend(this.options,options || {});
     
     this.list = list;
+    
     if (!list.fetched){
-         list.addEvent('fetched',addOnce);
+         list.addEvent('fetched',function addOnce(){
+            $this.init();
+            list.removeEvent('fetched',addOnce);
+         });
     } else this.init();
 };
 
