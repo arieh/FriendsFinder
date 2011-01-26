@@ -123,7 +123,7 @@ SearchBox.prototype = {
                     if (this.current <-1) this.current = -1;
                     
                     this.results[++this.current].focus();
-                    return false;;
+                    return false;
                 }
             break;
             case 38: //up
@@ -132,7 +132,7 @@ SearchBox.prototype = {
                 if (this.current == 0){
                     this.input.focus();
                     this.current--;
-                    return false;;
+                    return false;
                 }
                 
                 this.results[--this.current].focus();
@@ -185,11 +185,12 @@ $.extend(SearchBox.prototype,Events);
 
 
 jQuery.fn.friendsFinder = function(el,min){
-     var params = {target:el}
+     var params = {target:el}, list, box;
      if (min) params['minLength'] = min;
      
-     var list = new FriendsList;
-     var box = new SearchBox(list,params);
+     list = new FriendsList();
+     box = new SearchBox(list,params);
+     
      jQuery.fn.friendsFinder.box = box;
      jQuery.fn.friendsFinder.list = list;
      

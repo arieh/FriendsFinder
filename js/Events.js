@@ -60,6 +60,6 @@ var Events = this.Events = {
         if (index>-1) this.events[name].splice(index,1);
         return this;
     }
-}
+};
     
 }).apply(this,[jQuery]);

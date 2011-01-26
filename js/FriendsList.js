@@ -9,7 +9,7 @@ var FriendsList = this.FriendsList = function FriendsList(){
         $this.fetched = false;
     });
     this.getFriends();
-}
+};
 
 FriendsList.prototype = {
     friends : {}
@@ -52,7 +52,7 @@ FriendsList.prototype = {
         
         return match;
     }
-}
+};
 
 $.extend(FriendsList.prototype,Events);
 
