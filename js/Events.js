@@ -13,7 +13,7 @@ var Events = this.Events = {
      *
      * @return this
      */
-    , fireEvent : function(name,args,bind){
+    fireEvent : function fireEvent(name,args,bind){
         if (!this.events) this.events = {};
         
         if (!this.events[name]) return this;
@@ -34,7 +34,7 @@ var Events = this.Events = {
      * 
      * @return this
      */
-    , addEvent : function(name,cb){
+    , addEvent : function addEvent(name,cb){
         if (!this.events) this.events = {};        
         
         if (!this.events[name]) this.events[name] = [cb];
@@ -51,7 +51,7 @@ var Events = this.Events = {
      *
      * @return this
      */
-    , removeEvent :function(name,func){
+    , removeEvent :function removeEvent(name,func){
         if (!this.events) this.events = {};
         
         if (!this.events[name]) return this;
